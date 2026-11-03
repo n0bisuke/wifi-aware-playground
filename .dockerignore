@@ -1,0 +1,6 @@
+.git
+secrets/
+*.p8
+node_modules/
+.build/
+*.xip

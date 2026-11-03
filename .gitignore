@@ -1,0 +1,80 @@
+
+# --------------------------------------------------
+# Apple Developer credentials
+# --------------------------------------------------
+/secrets/
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
+
+# --------------------------------------------------
+# Swift / Swift Package Manager
+# --------------------------------------------------
+.build/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+Packages/
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+*.playground
+
+# --------------------------------------------------
+# Xcode / macOS
+# --------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+*.ipa
+*.app/
+*.dSYM/
+*.dSYM.zip
+*.xcarchive/
+*.xcresult/
+
+# --------------------------------------------------
+# Node.js
+# --------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+dist/
+coverage/
+
+# --------------------------------------------------
+# Claude Code
+# --------------------------------------------------
+.claude/settings.local.json
+.claude/projects/
+.claude/todos/
+.claude/debug/
+.claude/statsig/
+.claude.json
+
+# --------------------------------------------------
+# Environment / local settings
+# --------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --------------------------------------------------
+# Temporary files / logs
+# --------------------------------------------------
+*.log
+*.tmp
+*.swp
+*~
+.cache/
+tmp/
+temp/
+
+# --------------------------------------------------
+# Build artifacts
+# --------------------------------------------------
+build/
+out/
+
+*.xip

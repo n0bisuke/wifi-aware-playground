@@ -1,0 +1,43 @@
+
+name: wifi-swift
+
+services:
+  swift:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: swift-claude-xtool:latest
+    platform: linux/arm64
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+    volumes:
+      # Source code (Macと共有)
+      - .:/workspace
+
+      # Swift Package Manager
+      - swiftpm-cache:/root/.cache
+      - swiftpm-config:/root/.swiftpm
+
+      # Claude Code settings and authentication
+      - claude-config:/root/.claude
+
+      # xtool / Apple Developer settings
+      - developer-config:/root/.config
+      - developer-data:/root/.local/share
+
+      # Apple Developer API Key
+      - ./AuthKey_UW7VDCHQVS.p8:/run/secrets/apple-api-key.p8:ro
+
+    environment:
+      CLAUDE_CONFIG_DIR: /root/.claude
+
+    command: /bin/bash
+
+volumes:
+  swiftpm-cache:
+  swiftpm-config:
+  claude-config:
+  developer-config:
+  developer-data:
