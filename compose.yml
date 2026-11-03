@@ -28,10 +28,12 @@ services:
       - developer-data:/root/.local/share
 
       # Apple Developer API Key
-      - ./AuthKey_UW7VDCHQVS.p8:/run/secrets/apple-api-key.p8:ro
+      - ./AuthKey_8RKCCM6MLK.p8:/run/secrets/apple-api-key.p8:ro
 
     environment:
       CLAUDE_CONFIG_DIR: /root/.claude
+      # macOSのusbmuxdを127.0.0.1:27015で中継するsocatへの接続先(READMEを参照)
+      USBMUXD_SOCKET_ADDRESS: host.docker.internal:27015
 
     command: /bin/bash
 

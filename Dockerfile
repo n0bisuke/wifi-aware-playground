@@ -19,6 +19,7 @@ RUN apt-get update && \
       less \
       bash \
       unzip \
+      zip \
       xz-utils \
       libatomic1 \
       usbmuxd \
