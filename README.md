@@ -9,10 +9,13 @@ iOS 26以降のWi-Fi Awareを使い、2台のiPhoneをWi-Fiルーターやイン
 |---|---|
 | `xtool dev build`(署名なし) | 成功 |
 | 署名・プロビジョニング | 成功 |
-| 実機へのインストール | iPhone 16 Proで成功 |
-| ペアリング・通信 | 未検証(2台目での確認が必要) |
+| 実機へのインストール | iPhone 16 Pro、iPhone 13 miniで成功 |
+| ペアリング | 成功 |
+| テキストの送受信(`Coder` + `TCP()` の版) | 成功 |
+| Wi-Fiルーターなしでの通信 | 未検証 |
+| 写真、お絵描き、速度テスト、電波強度の表示 | ビルドのみ。実機では未検証 |
 
-**2台の間の通信はまだ確認していません。** `Coder` と `TLS()` の組み合わせはAppleのサンプルにないため、実行時に動くかどうかも未確認です。
+最新の状況は [`logs/HANDOFF.md`](logs/HANDOFF.md) を確認してください。
 
 ## 作業を再開する
 
@@ -24,6 +27,8 @@ iOS 26以降のWi-Fi Awareを使い、2台のiPhoneをWi-Fiルーターやイン
 docker compose up -d
 docker compose exec swift bash
 ```
+
+`docker compose run --rm swift` で起動しても構いません。その場合は `exit` でコンテナだけが消え、ソースコードとNamed Volumeは残ります。
 
 Named Volumeが消えるので `docker compose down -v` は実行しないでください。`--build` を付けるとSwiftとxtoolのバージョンが変わる可能性があるので、必要なときだけ使います。
 
@@ -63,6 +68,49 @@ xtool dev run -u <UDID>        # 署名してインストール
 
 **6. 終わったら、Macの中継を `Ctrl+C` で止めます。**
 
+## 容量を空けたあとに再開する
+
+ディスクを空けるために消したものに応じて、次の手順で戻します。**この手順は未検証です。** コマンドは `--help` で確認したものです。
+
+| 消したもの | 必要な作業 |
+|---|---|
+| `AwareChat/.build` | なし。次のビルドで作り直される |
+| `Xcode_27.2.xip` | なし。SDKを作り直すときだけ、Appleから再ダウンロードする |
+| イメージ | 手順1 |
+| Named Volume(Darwin SDK、xtoolの認証) | 手順2、3 |
+
+**1. イメージを作り直します。** Macのリポジトリのディレクトリで実行します。
+
+```sh
+docker compose build
+docker compose run --rm swift
+```
+
+`Dockerfile` はSwift 6.4.2とxtoolの `latest` を使います。動作を確認した環境(Swift 6.4.1、xtool 1.24.0)とは変わる可能性があるので、`xtool dev build` で確認してください。`zip` は `Dockerfile` に入っているので、このイメージでは追加不要です。
+
+**2. Darwin SDKを入れ直します。** コンテナ内で実行します。Xcodeの `.xip` がなければ、先にApple Developerのサイトからダウンロードし、リポジトリ直下に置きます。
+
+```sh
+xtool sdk install /workspace/Xcode_27.2.xip
+xtool sdk status
+```
+
+**3. xtoolにログインし直します。** Key IDとIssuer IDはApp Store Connectで確認します。
+
+```sh
+xtool auth login --mode key   # Key pathは /run/secrets/apple-api-key.p8
+xtool auth status
+```
+
+**4. 動作を確認します。**
+
+```sh
+cd AwareChat
+xtool dev build
+```
+
+Named Volumeを消すと、署名用の鍵も失われるので、次の `xtool dev run` でDevelopment証明書がもう1枚作られる可能性があります。`.p8` はAppleから再ダウンロードできません。失ったら、APIキーを再発行してください。
+
 ## 必要なもの
 
 - Docker(`linux/arm64` のコンテナを実行できる環境)
@@ -85,7 +133,7 @@ docker compose exec swift bash
 
 ```sh
 xtool auth login --mode key                 # Key ID、Issuer ID、Key pathを入力(パスは /run/secrets/apple-api-key.p8)
-xtool sdk build <Xcode.xipのパス> <出力先>  # XcodeからDarwin SDKを生成
+xtool sdk install <Xcode.xipのパス>         # XcodeからDarwin SDKを生成してインストール
 xtool sdk status                            # SDKの確認
 ```
 
@@ -187,7 +235,7 @@ Bundle IDは `AwareChat/xtool.yml` の `com.n0bisuke.awarechat` です。xtool�
 |        v                  | connect|        v                  |
 |   NetworkConnection       |<-------|   NetworkConnection       |
 |                           |        |                           |
-|   Coder (JSON) + TLS      |<======>|   Coder (JSON) + TLS      |
+|   TLV + TCP               |<======>|   TLV + TCP               |
 +---------------------------+  text  +---------------------------+
               ^                                    ^
               +------------ Wi-Fi Aware -----------+
@@ -201,7 +249,14 @@ Bundle IDは `AwareChat/xtool.yml` の `com.n0bisuke.awarechat` です。xtool�
 | Host(Publisher) | `NetworkListener` + `.wifiAware` | `DevicePairingView` |
 | Join(Subscriber) | `NetworkBrowser` → `NetworkConnection` | `DevicePicker` |
 
-サービス名は `_awarechat._tcp` です。メッセージは `Coder`(JSON)+ `TLS()` で送受信します。
+サービス名は `_awarechat._tcp` です。データは `TLV` + `TCP()` で送受信します。Wi-Fi Awareの接続はWi-Fi層で認証、暗号化されます。
+
+接続すると、次のデモを使えます。
+
+- **チャット:** テキストと写真を送り合います。
+- **お絵描き:** 片方で描いた線を相手の画面にも表示します。
+- **速度:** 64 MiBを送り、受信側で測った速度を表示します。
+- **電波強度:** 接続中に電波強度、回線の余力、送信遅延、接続時間を表示します。距離の目安は電波強度からの推定で、実測ではありません。
 
 ## 参考資料
 

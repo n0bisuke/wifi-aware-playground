@@ -6,7 +6,9 @@ iOS 26以降のWi-Fi Awareで2台のiPhoneを直接つなぐ実験用リポジ�
 
 - **作業を始めるとき:** `logs/HANDOFF.md` を読み、現在の状況と次の作業を確認する。再開の手順は `README.md` の「作業を再開する」にある。
 - **作業を終えるとき:** `logs/HANDOFF.md` を最新の状態に書き換え、`logs/YYYY-MM-DD.md` に実行した内容と結果を追記する。同じ日のファイルがあれば追記する。
+- **今後の対応候補:** `logs/BACKLOG.md` に書く。載っているだけでは着手せず、実装前に了承を得る。対応したら更新する。
 - **長く残す知見:** 手順は `README.md`、作業のルールは `AGENTS.md`、その時点の状況と経緯は `logs/` に書く。
+- **スクリーンショットなどの一時ファイル:** `logs/tmp/` に置く。Gitの対象外なので公開されない。
 - **公開リポジトリ:** `logs/` もGitHubで公開される。秘密鍵、Issuer ID、Team ID、UDID、Profile ID、個人名、他メンバーの端末名、Macのユーザーパスは書かない。
 
 ## 制約
@@ -18,6 +20,7 @@ iOS 26以降のWi-Fi Awareで2台のiPhoneを直接つなぐ実験用リポジ�
 - 次の操作はユーザーに確認してから行う。
   - `xtool dev build --sign`、`xtool dev run`、`xtool ds`(Developerアカウントや実機に変更が及ぶ可能性がある)
   - コミットとプッシュ
+  - **コードの実装や変更。** 不具合や要望の報告、感想、「〜したい」「〜できる?」は、実装の依頼とは限らない。原因の調査と対応案の提示までにとどめ、「実装してよいか」を確認し、了承を得てから着手する。
 
 ## コマンド
 
@@ -63,7 +66,9 @@ SDKはiOS 27.2までのAPIを含みますが、最小OSはiOS 26.0です。iOS 2
 ビルド成功は、実機で動くことを意味しません。報告では、確認済みの内容と未確認の内容を分けてください。
 
 - **確認済み:** コンテナ内のxtoolによるビルド、署名、プロビジョニング、中継経由のiPhone 16 Proへのインストール。Profileへの `com.apple.developer.wifi-aware` の反映。
-- **未確認:** ペアリング、2台の間の通信、`Coder` + `TLS()` の実行時の動作。
+- **確認済み(旧版):** `Coder` + `TCP()` でのテキスト送受信。
+- **未確認:** `TLV` + `TCP()` への変更後の通信、写真、お絵描き、速度テスト、電波強度の表示、Wi-Fiルーターなしでの通信。
+- **TLS:** `Coder` + アイデンティティなしの `TLS()` は、ペアリング後の接続で `-9838`(`errSSLPeerInternalError`)になった。TLSを使うならアイデンティティかPSKの設定が必要と見られる(未検証)。
 - **Capability:** App Store Connect APIは `WIFI_AWARE` を受け付けない(409)。APIキー認証では、Apple DeveloperのWebサイトでApp IDに有効化しておく必要がある。
 - **Bundle ID:** `xtool.yml` の `bundleID` は `com.n0bisuke.awarechat`。生成物ではなくこのファイルを変更する。xtoolのソースでは、Apple側に登録するIDに `XTL-<ID>.` の接頭辞を付ける実装になっている。
 - **APIキー認証:** `xtool ds teams list` はパスワード認証専用で使えない。Team IDは `xtool ds profiles list` の `team identifiers` などで確認する。
